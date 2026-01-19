@@ -35,7 +35,7 @@ def process_excel(df, due_days, daily_rate, working_days, ob_age):
     - df: Raw DataFrame
     - due_days: Due days threshold for filtering
     - daily_rate: Per day interest rate percentage
-    - working_days: Number of working days for interest calculation (used as cap)
+    - working_days: Maximum working days for interest calculation (cap at 31)
     - ob_age: Age value for Customer Opening Balance entries
 
     Returns:
@@ -72,16 +72,16 @@ def process_excel(df, due_days, daily_rate, working_days, ob_age):
     # Add Due days column
     df_filtered["Due days"] = due_days
 
-    # Calculate interest working days dynamically based on Age
-    # Formula: interst working = Age - Due days (capped at working_days if needed)
-    df_filtered["interst working"] = df_filtered["Age"] - due_days
+    # Calculate days overdue
+    days_overdue = df_filtered["Age"] - due_days
 
-    # Calculate Previous interest days (days before current working period)
-    # Formula: Previous interst = Age - Due days - interst working = 0 for first period
-    # But for periods beyond the first, it's cumulative previous days
-    df_filtered["Previous interst"] = (
-        df_filtered["Age"] - due_days - df_filtered["interst working"]
-    ).clip(lower=0)
+    # Calculate interest working days: min(days_overdue, working_days)
+    # This caps the working days at 31 (or whatever working_days is set to)
+    df_filtered["interst working"] = days_overdue.clip(upper=working_days)
+
+    # Calculate Previous interest: cumulative days before current working period
+    # Formula: Previous interst = days_overdue - interst working
+    df_filtered["Previous interst"] = days_overdue - df_filtered["interst working"]
 
     # Add per day interest rate column
     df_filtered["per day interst%"] = daily_rate
