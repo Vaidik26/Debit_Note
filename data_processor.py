@@ -35,7 +35,7 @@ def process_excel(df, due_days, daily_rate, working_days, ob_age):
     - df: Raw DataFrame
     - due_days: Due days threshold for filtering
     - daily_rate: Per day interest rate percentage
-    - working_days: Number of working days for interest calculation
+    - working_days: Number of working days for interest calculation (used as cap)
     - ob_age: Age value for Customer Opening Balance entries
 
     Returns:
@@ -72,21 +72,26 @@ def process_excel(df, due_days, daily_rate, working_days, ob_age):
     # Add Due days column
     df_filtered["Due days"] = due_days
 
-    # Calculate Previous interest days
-    df_filtered["Previous interst"] = (
-        df_filtered["Age"] - due_days - working_days
-    ).clip(lower=0)
+    # Calculate interest working days dynamically based on Age
+    # Formula: interst working = Age - Due days (capped at working_days if needed)
+    df_filtered["interst working"] = df_filtered["Age"] - due_days
 
-    # Add interest working days column
-    df_filtered["interst working"] = working_days
+    # Calculate Previous interest days (days before current working period)
+    # Formula: Previous interst = Age - Due days - interst working = 0 for first period
+    # But for periods beyond the first, it's cumulative previous days
+    df_filtered["Previous interst"] = (
+        df_filtered["Age"] - due_days - df_filtered["interst working"]
+    ).clip(lower=0)
 
     # Add per day interest rate column
     df_filtered["per day interst%"] = daily_rate
 
-    # Calculate working interest percentage
-    df_filtered["working interst in %"] = working_days * daily_rate
+    # Calculate working interest percentage based on actual working days
+    # Formula: working interst in % = interst working * per day interst%
+    df_filtered["working interst in %"] = df_filtered["interst working"] * daily_rate
 
-    # Calculate interest amount
+    # Calculate interest amount based on balance due
+    # Formula: interest amount = Balance Due * (working interst in % / 100)
     df_filtered["interest amount"] = df_filtered["Balance Due"] * (
         df_filtered["working interst in %"] / 100
     )
