@@ -1,0 +1,37 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+env/
+.env/
+
+# Excel files (data files)
+*.xlsx
+*.xls
+
+# Jupyter notebooks
+*.ipynb
+.ipynb_checkpoints/
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+
+# Log files
+*.log
+
+# Old/backup files
+streamlit_app.py
+streamlit_app.ipynb
+raw_to_expected_conversion.ipynb
